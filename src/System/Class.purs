@@ -63,6 +63,7 @@ type Log m = String -> m Unit
 
 type LogError m = String -> m Unit
 
+type GetCwd :: forall k. (Type -> k) -> k
 type GetCwd m = m (Path Abs Dir)
 type ReadFile r m = Path Abs File -> m (EitherV (ErrReadFile r) String)
 
