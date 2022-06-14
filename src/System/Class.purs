@@ -1,5 +1,6 @@
 module System.Class
-  ( EitherV
+  ( GetCwd
+  , EitherV
   , ErrReadFile
   , ErrWriteFile
   , Log
@@ -12,6 +13,7 @@ module System.Class
   , errReadFile
   , errWriteFile
   , log
+  , getCwd
   , logErr
   , readFile
   , writeFile
@@ -22,7 +24,7 @@ import Prelude
 import Data.Either (Either)
 import Data.Maybe (Maybe)
 import Data.Variant (Variant, inj)
-import Pathy (Abs, File, Path)
+import Pathy (Abs, Dir, File, Path)
 import Type.Proxy (Proxy(..))
 
 --------------------------------------------------------------------------------
@@ -60,6 +62,8 @@ type WriteFileError =
 type Log m = String -> m Unit
 
 type LogError m = String -> m Unit
+
+type GetCwd m = m (Path Abs Dir)
 type ReadFile r m = Path Abs File -> m (EitherV (ErrReadFile r) String)
 
 type WriteFile r m = Path Abs File -> String -> m (EitherV (ErrWriteFile r) Unit)
@@ -71,6 +75,7 @@ class
   MonadSystem m where
   log :: Log m
   logErr :: LogError m
+  getCwd :: GetCwd m
   readFile :: forall r. ReadFile r m
   writeFile :: forall r. WriteFile r m
 

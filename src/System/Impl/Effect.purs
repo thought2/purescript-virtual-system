@@ -5,15 +5,18 @@ module System.Impl.Effect
 import Prelude
 
 import Data.Either (Either(..))
+import Data.Maybe (fromJust)
 import Data.Newtype (class Newtype, wrap)
 import Effect as E
 import Effect.Console as C
 import Effect.Exception (Error, catchException)
 import Node.Encoding (Encoding(..))
 import Node.FS.Sync (readTextFile, writeTextFile)
-import Pathy (class IsDirOrFile, Abs, Path, posixPrinter)
+import Node.Process as N
+import Partial.Unsafe (unsafePartial)
+import Pathy (class IsDirOrFile, Abs, Path, posixParser, posixPrinter)
 import Pathy as P
-import System.Class (class MonadSystem, Log, LogError, ReadFile, WriteFile, errReadFile, errWriteFile)
+import System.Class (class MonadSystem, Log, LogError, ReadFile, WriteFile, GetCwd, errReadFile, errWriteFile)
 
 --------------------------------------------------------------------------------
 
@@ -36,6 +39,7 @@ derive newtype instance monadEffect :: Monad Effect
 instance monadSystemEffect :: MonadSystem Effect where
   log = _log
   logErr = _logErr
+  getCwd = _getCwd
   readFile = _readFile
   writeFile = _writeFile
 
@@ -46,6 +50,12 @@ _log = C.log >>> wrap
 
 _logErr :: LogError Effect
 _logErr = C.error >>> wrap
+
+_getCwd :: GetCwd Effect
+_getCwd = N.cwd <#> unsafePartial f # wrap
+  where
+    f :: Partial => _
+    f = P.parseAbsDir posixParser >>> fromJust
 
 _readFile :: forall r. ReadFile r Effect
 _readFile p =
