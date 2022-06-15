@@ -15,7 +15,7 @@ import Prelude
 import Control.Monad.Except (ExceptT(..))
 import Control.Monad.Except.Checked (ExceptV)
 import Data.Either (Either(..))
-import Pathy (Abs, AbsDir, File, Path)
+import Pathy (AbsDir, AbsFile)
 import System.Class (class MonadSystem, class MonadVirtualSystem, ErrReadFile, ErrWriteFile)
 import System.Class as C
 
@@ -31,10 +31,10 @@ getCwd = C.getCwd <#> Right # ExceptT
 setCwd :: forall r e o m. MonadSystem e o m => AbsDir -> ExceptV r m Unit
 setCwd x1 = C.setCwd x1 <#> Right # ExceptT
 
-readFile :: forall r e o m. MonadSystem e o m => Path Abs File -> ExceptV (ErrReadFile r) m String
+readFile :: forall r e o m. MonadSystem e o m => AbsFile -> ExceptV (ErrReadFile r) m String
 readFile x1 = C.readFile x1 # ExceptT
 
-writeFile :: forall r e o m. MonadSystem e o m => Path Abs File -> String -> ExceptV (ErrWriteFile r) m Unit
+writeFile :: forall r e o m. MonadSystem e o m => AbsFile -> String -> ExceptV (ErrWriteFile r) m Unit
 writeFile x1 x2 = C.writeFile x1 x2 # ExceptT
 
 --------------------------------------------------------------------------------

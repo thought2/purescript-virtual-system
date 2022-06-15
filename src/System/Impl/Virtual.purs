@@ -1,17 +1,20 @@
 module System.Impl.Virtual
   ( Virtual
   , runVirtual
+  , runVirtualExceptV
   ) where
 
 import Prelude
 
+import Control.Monad.Except (runExceptT)
+import Control.Monad.Except.Checked (ExceptV)
 import Control.Monad.State (State, evalState, get, modify)
 import Data.Either (Either(..), note)
 import Data.Map (Map)
 import Data.Map as M
 import Data.Maybe (Maybe(..))
 import Pathy (Abs, Dir, File, Path, rootDir)
-import System.Class (class MonadSystem, class MonadVirtualSystem, errReadFile)
+import System.Class (class MonadSystem, class MonadVirtualSystem, EitherV, errReadFile)
 
 --------------------------------------------------------------------------------
 
@@ -86,3 +89,6 @@ initSt =
 
 runVirtual :: forall e o a. Virtual e o a -> a
 runVirtual (Virtual st) = evalState st initSt
+
+runVirtualExceptV :: forall r e o a. ExceptV r (Virtual e o) a -> EitherV r a
+runVirtualExceptV = runExceptT >>> runVirtual
