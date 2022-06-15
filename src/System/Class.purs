@@ -99,7 +99,7 @@ type GetStdout o m = m (Array o)
 type GetStderr :: forall k. Type -> (Type -> k) -> k
 type GetStderr e m = m (Array e)
 
-class MonadVirtualSystem e o m | m -> e o where
+class Monad m <= MonadVirtualSystem e o m | m -> e o where
   getStdout :: GetStdout o m
   getStderr :: GetStderr e m
 
