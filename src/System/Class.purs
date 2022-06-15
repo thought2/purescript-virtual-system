@@ -3,14 +3,7 @@ module System.Class
   , Err
   , ErrReadFile
   , ErrWriteFile
-  , GetCwd
-  , GetStderr
-  , GetStdout
-  , Log
-  , LogError
-  , ReadFile
   , ReadFileError
-  , WriteFile
   , WriteFileError
   , class MonadSystem
   , class MonadVirtualSystem
@@ -18,6 +11,7 @@ module System.Class
   , errReadFile
   , errWriteFile
   , getCwd
+  , setCwd
   , getStderr
   , getStdout
   , log
@@ -32,7 +26,7 @@ import Prelude
 import Data.Either (Either)
 import Data.Maybe (Maybe)
 import Data.Variant (Variant, inj)
-import Pathy (Abs, Dir, File, Path)
+import Pathy (Abs, AbsDir, AbsFile, File, Path)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
@@ -70,38 +64,22 @@ type WriteFileError =
 
 --------------------------------------------------------------------------------
 
-type Log o m = o -> m Unit
-
-type LogError e m = e -> m Unit
-
-type GetCwd :: forall k. (Type -> k) -> k
-type GetCwd m = m (Path Abs Dir)
-
-type ReadFile r m = Path Abs File -> m (EitherV (ErrReadFile r) String)
-
-type WriteFile r m = Path Abs File -> String -> m (EitherV (ErrWriteFile r) Unit)
-
 class
   Monad m <=
   MonadSystem e o m
   | m -> e o where
-  log :: Log o m
-  logErr :: LogError e m
-  getCwd :: GetCwd m
-  readFile :: forall r. ReadFile r m
-  writeFile :: forall r. WriteFile r m
+  log :: o -> m Unit
+  logErr :: e -> m Unit
+  getCwd :: m AbsDir
+  setCwd :: AbsDir -> m Unit
+  readFile :: forall r. AbsFile -> m (EitherV (ErrReadFile r) String)
+  writeFile :: forall r. AbsFile -> String -> m (EitherV (ErrWriteFile r) Unit)
 
 --------------------------------------------------------------------------------
 
-type GetStdout :: forall k. Type -> (Type -> k) -> k
-type GetStdout o m = m (Array o)
-
-type GetStderr :: forall k. Type -> (Type -> k) -> k
-type GetStderr e m = m (Array e)
-
 class Monad m <= MonadVirtualSystem e o m | m -> e o where
-  getStdout :: GetStdout o m
-  getStderr :: GetStderr e m
+  getStdout :: m (Array o)
+  getStderr :: m (Array e)
 
 --------------------------------------------------------------------------------
 

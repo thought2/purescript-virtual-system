@@ -5,6 +5,7 @@ module System.ExceptV
   , log
   , logErr
   , readFile
+  , setCwd
   , writeFile
   )
   where
@@ -14,7 +15,7 @@ import Prelude
 import Control.Monad.Except (ExceptT(..))
 import Control.Monad.Except.Checked (ExceptV)
 import Data.Either (Either(..))
-import Pathy (Abs, Dir, File, Path)
+import Pathy (Abs, AbsDir, File, Path)
 import System.Class (class MonadSystem, class MonadVirtualSystem, ErrReadFile, ErrWriteFile)
 import System.Class as C
 
@@ -24,8 +25,11 @@ log x1 = C.log x1 <#> Right # ExceptT
 logErr :: forall r e o m. MonadSystem e o m => e -> ExceptV r m Unit
 logErr x1 = C.logErr x1 <#> Right # ExceptT
 
-getCwd :: forall r e o m. MonadSystem e o m => ExceptV r m (Path Abs Dir)
+getCwd :: forall r e o m. MonadSystem e o m => ExceptV r m AbsDir
 getCwd = C.getCwd <#> Right # ExceptT
+
+setCwd :: forall r e o m. MonadSystem e o m => AbsDir -> ExceptV r m Unit
+setCwd x1 = C.setCwd x1 <#> Right # ExceptT
 
 readFile :: forall r e o m. MonadSystem e o m => Path Abs File -> ExceptV (ErrReadFile r) m String
 readFile x1 = C.readFile x1 # ExceptT

@@ -10,8 +10,8 @@ import Data.Either (Either(..), note)
 import Data.Map (Map)
 import Data.Map as M
 import Data.Maybe (Maybe(..))
-import Pathy (Abs, Dir, File, Path)
-import System.Class (class MonadSystem, class MonadVirtualSystem, GetCwd, Log, LogError, ReadFile, WriteFile, GetStdout, errReadFile)
+import Pathy (Abs, Dir, File, Path, rootDir)
+import System.Class (class MonadSystem, class MonadVirtualSystem, errReadFile)
 
 --------------------------------------------------------------------------------
 
@@ -37,39 +37,31 @@ derive newtype instance bindVirtual :: Bind (Virtual e o)
 derive newtype instance monadVirtual :: Monad (Virtual e o)
 
 instance monadSystemVirtual :: MonadSystem e o (Virtual e o) where
-  log = _log
-  logErr = _logErr
-  getCwd = _getCwd
-  readFile = _readFile
-  writeFile = _writeFile
+  log msg = Virtual do
+    _ <- modify (\st -> st { stdout = st.stdout <> [ msg ] })
+    pure unit
 
---------------------------------------------------------------------------------
-_log :: forall e o. Log o (Virtual e o)
-_log msg = Virtual do
-  _ <- modify (\st -> st { stdout = st.stdout <> [ msg ] })
-  pure unit
+  logErr msg = Virtual do
+    _ <- modify (\st -> st { stderr = st.stderr <> [ msg ] })
+    pure unit
 
-_logErr :: forall e o. LogError e (Virtual e o)
-_logErr msg = Virtual do
-  _ <- modify (\st -> st { stderr = st.stderr <> [ msg ] })
-  pure unit
+  getCwd = Virtual do
+    { cwd } <- get
+    pure cwd
 
-_getCwd :: forall e o. GetCwd (Virtual e o)
-_getCwd = Virtual do
-  { cwd } <- get
-  pure cwd
+  setCwd cwd = Virtual do
+    _ <- modify (\st -> st { cwd = cwd })
+    pure unit
 
-_readFile :: forall r e o. ReadFile r (Virtual e o)
-_readFile p = Virtual do
-  { files } <- get
-  M.lookup p files # note (errReadFile { path: p, native: Nothing }) # pure
+  readFile p = Virtual do
+    { files } <- get
+    M.lookup p files # note (errReadFile { path: p, native: Nothing }) # pure
 
-_writeFile :: forall r e o. WriteFile r (Virtual e o)
-_writeFile p c = Virtual do
-  { files } <- get
-  let files' = M.insert p c files
-  _ <- modify (\st -> st { files = files' })
-  pure $ Right unit
+  writeFile p c = Virtual do
+    { files } <- get
+    let files' = M.insert p c files
+    _ <- modify (\st -> st { files = files' })
+    pure $ Right unit
 
 --------------------------------------------------------------------------------
 
@@ -84,13 +76,13 @@ instance monadVirtualSystemVirtual :: MonadVirtualSystem e o (Virtual e o) where
 
 --------------------------------------------------------------------------------
 
-initSt :: forall e o. Path Abs Dir -> SystemState e o
-initSt cwd =
+initSt :: forall e o. SystemState e o
+initSt =
   { stdout: []
   , stderr: []
-  , cwd
+  , cwd: rootDir
   , files: M.empty
   }
 
-runVirtual :: forall e o a. Path Abs Dir -> Virtual e o a -> a
-runVirtual cwd (Virtual st) = evalState st (initSt cwd)
+runVirtual :: forall e o a. Virtual e o a -> a
+runVirtual (Virtual st) = evalState st initSt
