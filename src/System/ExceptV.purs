@@ -5,8 +5,10 @@ module System.ExceptV
   , log
   , logErr
   , readFile
+  , readFileLines
   , setCwd
   , writeFile
+  , writeFileLines
   )
   where
 
@@ -36,6 +38,14 @@ readFile x1 = C.readFile x1 # ExceptT
 
 writeFile :: forall r e o m. MonadSystem e o m => AbsFile -> String -> ExceptV (ErrWriteFile r) m Unit
 writeFile x1 x2 = C.writeFile x1 x2 # ExceptT
+
+--------------------------------------------------------------------------------
+
+writeFileLines :: forall r e o m. MonadSystem e o m => AbsFile -> Array String -> ExceptV (ErrWriteFile r) m Unit
+writeFileLines x1 x2 = C.writeFileLines x1 x2 # ExceptT
+
+readFileLines :: forall r e o m. MonadSystem e o m => AbsFile -> ExceptV (ErrReadFile r) m (Array String)
+readFileLines x = C.readFileLines x # ExceptT
 
 --------------------------------------------------------------------------------
 

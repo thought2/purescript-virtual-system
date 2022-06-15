@@ -11,20 +11,24 @@ module System.Class
   , errReadFile
   , errWriteFile
   , getCwd
-  , setCwd
   , getStderr
   , getStdout
   , log
   , logErr
-  , readFile
-  , writeFile
   , print
-  ) where
+  , readFile
+  , readFileLines
+  , setCwd
+  , writeFile
+  , writeFileLines
+  )
+  where
 
 import Prelude
 
 import Data.Either (Either)
 import Data.Maybe (Maybe)
+import Data.String (Pattern(..), joinWith, split)
 import Data.Variant (Variant, inj)
 import Pathy (Abs, AbsDir, AbsFile, File, Path)
 import Type.Proxy (Proxy(..))
@@ -74,6 +78,14 @@ class
   setCwd :: AbsDir -> m Unit
   readFile :: forall r. AbsFile -> m (EitherV (ErrReadFile r) String)
   writeFile :: forall r. AbsFile -> String -> m (EitherV (ErrWriteFile r) Unit)
+
+--------------------------------------------------------------------------------
+
+writeFileLines :: forall r e o m. MonadSystem e o m => AbsFile -> Array String -> m (EitherV (ErrWriteFile r) Unit)
+writeFileLines x xs = writeFile x $ joinWith "\n" xs
+
+readFileLines :: forall r e o m. MonadSystem e o m => AbsFile -> m (EitherV (ErrReadFile r) (Array String))
+readFileLines x = readFile x <#> map (split $ Pattern "\n")
 
 --------------------------------------------------------------------------------
 

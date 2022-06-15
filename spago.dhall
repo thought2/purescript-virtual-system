@@ -15,6 +15,7 @@
   , "pathy"
   , "prelude"
   , "psci-support"
+  , "strings"
   , "transformers"
   , "typelevel-prelude"
   , "undefined"
