@@ -1,10 +1,7 @@
 module System.Impl.Virtual
   ( Virtual
-  , getStderr
-  , getStdout
   , runVirtual
-  )
-  where
+  ) where
 
 import Prelude
 
@@ -14,32 +11,32 @@ import Data.Map (Map)
 import Data.Map as M
 import Data.Maybe (Maybe(..))
 import Pathy (Abs, Dir, File, Path)
-import System.Class (class MonadSystem, Log, LogError, ReadFile, WriteFile, GetCwd, errReadFile)
+import System.Class (class MonadSystem, class MonadVirtualSystem, GetCwd, Log, LogError, ReadFile, WriteFile, GetStdout, errReadFile)
 
 --------------------------------------------------------------------------------
 
-type SystemState =
-  { stdout :: String
-  , stderr :: String
+type SystemState e o =
+  { stderr :: Array e
+  , stdout :: Array o
   , cwd :: Path Abs Dir
   , files :: Map (Path Abs File) String
   }
 
-newtype Virtual a = Virtual (State SystemState a)
+newtype Virtual e o a = Virtual (State (SystemState e o) a)
 
 --------------------------------------------------------------------------------
 
-derive newtype instance functorVirtual :: Functor Virtual
+derive newtype instance functorVirtual :: Functor (Virtual e o)
 
-derive newtype instance applyVirtual :: Apply Virtual
+derive newtype instance applyVirtual :: Apply (Virtual e o)
 
-derive newtype instance applicativeVirtual :: Applicative Virtual
+derive newtype instance applicativeVirtual :: Applicative (Virtual e o)
 
-derive newtype instance bindVirtual :: Bind Virtual
+derive newtype instance bindVirtual :: Bind (Virtual e o)
 
-derive newtype instance monadVirtual :: Monad Virtual
+derive newtype instance monadVirtual :: Monad (Virtual e o)
 
-instance monadSystemVirtual :: MonadSystem Virtual where
+instance monadSystemVirtual :: MonadSystem e o (Virtual e o) where
   log = _log
   logErr = _logErr
   getCwd = _getCwd
@@ -47,27 +44,27 @@ instance monadSystemVirtual :: MonadSystem Virtual where
   writeFile = _writeFile
 
 --------------------------------------------------------------------------------
-_log :: Log Virtual
+_log :: forall e o. Log o (Virtual e o)
 _log msg = Virtual do
-  _ <- modify (\st -> st { stdout = st.stdout <> "\n" <> msg })
+  _ <- modify (\st -> st { stdout = st.stdout <> [ msg ] })
   pure unit
 
-_logErr :: LogError Virtual
+_logErr :: forall e o. LogError e (Virtual e o)
 _logErr msg = Virtual do
-  _ <- modify (\st -> st { stderr = st.stderr <> "\n" <> msg })
+  _ <- modify (\st -> st { stderr = st.stderr <> [ msg ] })
   pure unit
 
-_getCwd :: GetCwd Virtual
+_getCwd :: forall e o. GetCwd (Virtual e o)
 _getCwd = Virtual do
   { cwd } <- get
   pure cwd
 
-_readFile :: forall r. ReadFile r Virtual
+_readFile :: forall r e o. ReadFile r (Virtual e o)
 _readFile p = Virtual do
   { files } <- get
   M.lookup p files # note (errReadFile { path: p, native: Nothing }) # pure
 
-_writeFile :: forall r. WriteFile r Virtual
+_writeFile :: forall r e o. WriteFile r (Virtual e o)
 _writeFile p c = Virtual do
   { files } <- get
   let files' = M.insert p c files
@@ -76,25 +73,24 @@ _writeFile p c = Virtual do
 
 --------------------------------------------------------------------------------
 
-getStdout :: Virtual String
-getStdout = Virtual do
-  { stdout } <- get
-  pure stdout
+instance monadVirtualSystemVirtual :: MonadVirtualSystem e o (Virtual e o) where
+  getStdout = Virtual do
+    { stdout } <- get
+    pure stdout
 
-getStderr :: Virtual String
-getStderr = Virtual do
-  { stderr } <- get
-  pure stderr
+  getStderr = Virtual do
+    { stderr } <- get
+    pure stderr
 
 --------------------------------------------------------------------------------
 
-initSt :: Path Abs Dir -> SystemState
+initSt :: forall e o. Path Abs Dir -> SystemState e o
 initSt cwd =
-  { stdout: ""
-  , stderr: ""
+  { stdout: []
+  , stderr: []
   , cwd
   , files: M.empty
   }
 
-runVirtual :: forall a. Path Abs Dir -> Virtual a -> a
+runVirtual :: forall e o a. Path Abs Dir -> Virtual e o a -> a
 runVirtual cwd (Virtual st) = evalState st (initSt cwd)

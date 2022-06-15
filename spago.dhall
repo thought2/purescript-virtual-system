@@ -16,6 +16,7 @@
   , "prelude"
   , "psci-support"
   , "transformers"
+  , "typelevel-prelude"
   , "undefined"
   , "variant"
   ]

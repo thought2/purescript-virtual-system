@@ -16,7 +16,7 @@ import Node.Process as N
 import Partial.Unsafe (unsafePartial)
 import Pathy (class IsDirOrFile, Abs, Path, posixParser, posixPrinter)
 import Pathy as P
-import System.Class (class MonadSystem, Log, LogError, ReadFile, WriteFile, GetCwd, errReadFile, errWriteFile)
+import System.Class (class MonadSystem, class Print, GetCwd, Log, LogError, ReadFile, WriteFile, errReadFile, errWriteFile, print)
 
 --------------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ derive newtype instance bindEffect :: Bind Effect
 
 derive newtype instance monadEffect :: Monad Effect
 
-instance monadSystemEffect :: MonadSystem Effect where
+instance monadSystemEffect :: (Print e, Print o) => MonadSystem e o Effect where
   log = _log
   logErr = _logErr
   getCwd = _getCwd
@@ -45,11 +45,11 @@ instance monadSystemEffect :: MonadSystem Effect where
 
 --------------------------------------------------------------------------------
 
-_log :: Log Effect
-_log = C.log >>> wrap
+_log :: forall o. Print o => Log o Effect
+_log = print >>> C.log >>> wrap
 
-_logErr :: LogError Effect
-_logErr = C.error >>> wrap
+_logErr :: forall e. Print e => LogError e Effect
+_logErr = print >>> C.error >>> wrap
 
 _getCwd :: GetCwd Effect
 _getCwd = N.cwd <#> unsafePartial f # wrap

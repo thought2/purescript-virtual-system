@@ -4,6 +4,8 @@ module System.Class
   , ErrReadFile
   , ErrWriteFile
   , GetCwd
+  , GetStderr
+  , GetStdout
   , Log
   , LogError
   , ReadFile
@@ -11,15 +13,19 @@ module System.Class
   , WriteFile
   , WriteFileError
   , class MonadSystem
+  , class MonadVirtualSystem
+  , class Print
   , errReadFile
   , errWriteFile
   , getCwd
+  , getStderr
+  , getStdout
   , log
   , logErr
   , readFile
   , writeFile
-  )
-  where
+  , print
+  ) where
 
 import Prelude
 
@@ -64,9 +70,9 @@ type WriteFileError =
 
 --------------------------------------------------------------------------------
 
-type Log m = String -> m Unit
+type Log o m = o -> m Unit
 
-type LogError m = String -> m Unit
+type LogError e m = e -> m Unit
 
 type GetCwd :: forall k. (Type -> k) -> k
 type GetCwd m = m (Path Abs Dir)
@@ -75,15 +81,29 @@ type ReadFile r m = Path Abs File -> m (EitherV (ErrReadFile r) String)
 
 type WriteFile r m = Path Abs File -> String -> m (EitherV (ErrWriteFile r) Unit)
 
---------------------------------------------------------------------------------
-
 class
   Monad m <=
-  MonadSystem m where
-  log :: Log m
-  logErr :: LogError m
+  MonadSystem e o m
+  | m -> e o where
+  log :: Log o m
+  logErr :: LogError e m
   getCwd :: GetCwd m
   readFile :: forall r. ReadFile r m
   writeFile :: forall r. WriteFile r m
 
 --------------------------------------------------------------------------------
+
+type GetStdout :: forall k. Type -> (Type -> k) -> k
+type GetStdout o m = m (Array o)
+
+type GetStderr :: forall k. Type -> (Type -> k) -> k
+type GetStderr e m = m (Array e)
+
+class MonadVirtualSystem e o m | m -> e o where
+  getStdout :: GetStdout o m
+  getStderr :: GetStderr e m
+
+--------------------------------------------------------------------------------
+
+class Print a where
+  print :: a -> String
