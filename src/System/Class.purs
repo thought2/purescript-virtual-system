@@ -5,14 +5,18 @@ module System.Class
   , ErrWriteFile
   , ReadFileError
   , WriteFileError
+  , class MonadGetCwd
+  , class MonadLog
+  , class MonadLogErr
+  , class MonadReadFile
+  , class MonadSetCwd
   , class MonadSystem
   , class MonadVirtualSystem
+  , class MonadWriteFile
   , class Print
   , errReadFile
   , errWriteFile
   , getCwd
-  , getStderr
-  , getStdout
   , log
   , logErr
   , print
@@ -21,8 +25,7 @@ module System.Class
   , setCwd
   , writeFile
   , writeFileLines
-  )
-  where
+  ) where
 
 import Prelude
 
@@ -68,16 +71,35 @@ type WriteFileError =
 
 --------------------------------------------------------------------------------
 
-class
-  Monad m <=
-  MonadSystem e o m
-  | m -> e o where
+class Monad m <= MonadLog o m | m -> o where
   log :: o -> m Unit
+
+class Monad m <= MonadLogErr e m | m -> e where
   logErr :: e -> m Unit
+
+class Monad m <= MonadGetCwd m where
   getCwd :: m AbsDir
+
+class Monad m <= MonadSetCwd m where
   setCwd :: AbsDir -> m Unit
+
+class Monad m <= MonadReadFile m where
   readFile :: forall r. AbsFile -> m (EitherV (ErrReadFile r) String)
+
+class Monad m <= MonadWriteFile m where
   writeFile :: forall r. AbsFile -> String -> m (EitherV (ErrWriteFile r) Unit)
+
+class
+  ( Monad m
+  , MonadLog o m
+  , MonadLogErr e m
+  , MonadGetCwd m
+  , MonadSetCwd m
+  , MonadReadFile m
+  , MonadWriteFile m
+  ) <=
+  MonadSystem e o m
+  | m -> e o
 
 --------------------------------------------------------------------------------
 
@@ -89,9 +111,8 @@ readFileLines x = readFile x <#> map (split $ Pattern "\n")
 
 --------------------------------------------------------------------------------
 
-class Monad m <= MonadVirtualSystem e o m | m -> e o where
-  getStdout :: m (Array o)
-  getStderr :: m (Array e)
+class MonadVirtualSystem :: forall k1 k2. k1 -> k2 -> (Type -> Type) -> Constraint
+class Monad m <= MonadVirtualSystem e o m | m -> e o
 
 --------------------------------------------------------------------------------
 

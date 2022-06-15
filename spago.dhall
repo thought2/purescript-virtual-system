@@ -17,6 +17,7 @@
   , "psci-support"
   , "strings"
   , "transformers"
+  , "tuples"
   , "typelevel-prelude"
   , "undefined"
   , "variant"
