@@ -1,18 +1,17 @@
 module System.Impl.Virtual
   ( Virtual
   , runVirtual
-  , runVirtualExceptV
   ) where
 
 import Prelude
 
-import Control.Monad.Except (runExceptT)
-import Control.Monad.Except.Checked (ExceptV)
-import Control.Monad.State (State, evalState, get, modify)
+import Control.Monad.Except (Except, runExcept)
+import Control.Monad.State (StateT, evalStateT, get, modify)
 import Data.Either (Either(..), note)
 import Data.Map (Map)
 import Data.Map as M
 import Data.Maybe (Maybe(..))
+import Data.Variant (Variant)
 import Pathy (Abs, Dir, File, Path, rootDir)
 import System.Class (class MonadSystem, class MonadVirtualSystem, EitherV, errReadFile)
 
@@ -25,21 +24,21 @@ type SystemState e o =
   , files :: Map (Path Abs File) String
   }
 
-newtype Virtual e o a = Virtual (State (SystemState e o) a)
+newtype Virtual e o r a = Virtual (StateT (SystemState e o) (Except (Variant r)) a)
 
 --------------------------------------------------------------------------------
 
-derive newtype instance functorVirtual :: Functor (Virtual e o)
+derive newtype instance functorVirtual :: Functor (Virtual e o r)
 
-derive newtype instance applyVirtual :: Apply (Virtual e o)
+derive newtype instance applyVirtual :: Apply (Virtual e o r)
 
-derive newtype instance applicativeVirtual :: Applicative (Virtual e o)
+derive newtype instance applicativeVirtual :: Applicative (Virtual e o r)
 
-derive newtype instance bindVirtual :: Bind (Virtual e o)
+derive newtype instance bindVirtual :: Bind (Virtual e o r)
 
-derive newtype instance monadVirtual :: Monad (Virtual e o)
+derive newtype instance monadVirtual :: Monad (Virtual e o r)
 
-instance monadSystemVirtual :: MonadSystem e o (Virtual e o) where
+instance monadSystemVirtual :: MonadSystem e o (Virtual e o r) where
   log msg = Virtual do
     _ <- modify (\st -> st { stdout = st.stdout <> [ msg ] })
     pure unit
@@ -68,7 +67,7 @@ instance monadSystemVirtual :: MonadSystem e o (Virtual e o) where
 
 --------------------------------------------------------------------------------
 
-instance monadVirtualSystemVirtual :: MonadVirtualSystem e o (Virtual e o) where
+instance monadVirtualSystemVirtual :: MonadVirtualSystem e o (Virtual e o r) where
   getStdout = Virtual do
     { stdout } <- get
     pure stdout
@@ -87,8 +86,6 @@ initSt =
   , files: M.empty
   }
 
-runVirtual :: forall e o a. Virtual e o a -> a
-runVirtual (Virtual st) = evalState st initSt
+runVirtual :: forall e o r a. Virtual e o r a -> EitherV r a
+runVirtual (Virtual m) = evalStateT m initSt # runExcept
 
-runVirtualExceptV :: forall r e o a. ExceptV r (Virtual e o) a -> EitherV r a
-runVirtualExceptV = runExceptT >>> runVirtual
