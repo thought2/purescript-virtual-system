@@ -103,10 +103,10 @@ class
 
 --------------------------------------------------------------------------------
 
-writeFileLines :: forall r e o m. MonadSystem e o m => AbsFile -> Array String -> m (EitherV (ErrWriteFile r) Unit)
+writeFileLines :: forall r m. MonadWriteFile m => AbsFile -> Array String -> m (EitherV (ErrWriteFile r) Unit)
 writeFileLines x xs = writeFile x $ joinWith "\n" xs
 
-readFileLines :: forall r e o m. MonadSystem e o m => AbsFile -> m (EitherV (ErrReadFile r) (Array String))
+readFileLines :: forall r m. MonadReadFile m => AbsFile -> m (EitherV (ErrReadFile r) (Array String))
 readFileLines x = readFile x <#> map (split $ Pattern "\n")
 
 --------------------------------------------------------------------------------
