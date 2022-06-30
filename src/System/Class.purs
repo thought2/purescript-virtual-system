@@ -11,19 +11,21 @@ module System.Class
   , getCwd
   , log
   , logErr
+  , readAnyFile
   , readFile
-  , readFileLines
   , setCwd
+  , writeAnyFile
   , writeFile
-  , writeFileLines
-  ) where
+  )
+  where
 
 import Prelude
 
-import Data.Either (Either)
+import Control.Monad.Trans.Class (lift)
+import Data.Either (Either(..))
 import Data.String (Pattern(..), joinWith, split)
 import Data.Variant (Variant)
-import Pathy (AbsDir, AbsFile)
+import Pathy (AbsDir, AbsFile, AnyFile, (</>))
 import System.Error (ErrReadFile, ErrWriteFile)
 
 --------------------------------------------------------------------------------
@@ -64,14 +66,25 @@ class
 
 --------------------------------------------------------------------------------
 
-writeFileLines :: forall r m. MonadWriteFile m => AbsFile -> Array String -> m (EitherV (ErrWriteFile r) Unit)
-writeFileLines x xs = writeFile x $ joinWith "\n" xs
+writeAnyFile :: forall r m. MonadGetCwd m => MonadWriteFile m => AnyFile -> String -> m (EitherV (ErrWriteFile r) Unit)
+writeAnyFile path content = do
+  absPath <- toAbsFile path
+  writeFile absPath content
 
-readFileLines :: forall r m. MonadReadFile m => AbsFile -> m (EitherV (ErrReadFile r) (Array String))
-readFileLines x = readFile x <#> map (split $ Pattern "\n")
+readAnyFile :: forall r m. MonadGetCwd m => MonadReadFile m => AnyFile -> m (EitherV (ErrReadFile r) String)
+readAnyFile path = do
+  absPath <- toAbsFile path
+  readFile absPath
 
 --------------------------------------------------------------------------------
 
 class MonadVirtualSystem :: forall k1 k2. k1 -> k2 -> (Type -> Type) -> Constraint
 class Monad m <= MonadVirtualSystem e o m | m -> e o
 
+--------------------------------------------------------------------------------
+
+toAbsFile :: forall m. MonadGetCwd m => AnyFile -> m AbsFile
+toAbsFile (Left absFile) = pure absFile
+toAbsFile (Right relFile) = do
+  cwd <- getCwd
+  pure $ cwd </> relFile

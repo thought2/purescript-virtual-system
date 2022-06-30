@@ -2,19 +2,20 @@ module System.ExceptV
   ( getCwd
   , log
   , logErr
+  , readAnyFile
   , readFile
-  , readFileLines
   , setCwd
+  , writeAnyFile
   , writeFile
-  , writeFileLines
-  ) where
+  )
+  where
 
 import Prelude
 
 import Control.Monad.Except (ExceptT(..))
 import Control.Monad.Except.Checked (ExceptV)
 import Data.Either (Either(..))
-import Pathy (AbsDir, AbsFile)
+import Pathy (AbsDir, AbsFile, AnyFile)
 import System.Class (class MonadGetCwd, class MonadLog, class MonadLogErr, class MonadReadFile, class MonadSetCwd, class MonadWriteFile)
 import System.Class as C
 import System.Error (ErrReadFile, ErrWriteFile)
@@ -37,11 +38,8 @@ readFile x1 = C.readFile x1 # ExceptT
 writeFile :: forall r m. MonadWriteFile m => AbsFile -> String -> ExceptV (ErrWriteFile r) m Unit
 writeFile x1 x2 = C.writeFile x1 x2 # ExceptT
 
---------------------------------------------------------------------------------
+readAnyFile :: forall r m. MonadGetCwd m => MonadReadFile m => AnyFile -> ExceptV (ErrReadFile r) m String
+readAnyFile x1 = C.readAnyFile x1 # ExceptT
 
-writeFileLines :: forall r m. MonadWriteFile m => AbsFile -> Array String -> ExceptV (ErrWriteFile r) m Unit
-writeFileLines x1 x2 = C.writeFileLines x1 x2 # ExceptT
-
-readFileLines :: forall r m. MonadReadFile m => AbsFile -> ExceptV (ErrReadFile r) m (Array String)
-readFileLines x = C.readFileLines x # ExceptT
-
+writeAnyFile :: forall r m. MonadGetCwd m => MonadWriteFile m => AnyFile -> String -> ExceptV (ErrWriteFile r) m Unit
+writeAnyFile x1 x2 = C.writeAnyFile x1 x2 # ExceptT
