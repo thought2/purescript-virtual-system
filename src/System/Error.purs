@@ -9,8 +9,7 @@ module System.Error
   , printErr
   , printErrReadFile
   , printErrWriteFile
-  )
-  where
+  ) where
 
 import Prelude
 
@@ -44,10 +43,16 @@ newtype ReadFileError = ReadFileError
   , native :: Maybe String
   }
 
+derive newtype instance showReadFileError :: Show ReadFileError
+derive newtype instance eqReadFileError :: Eq ReadFileError
+
 newtype WriteFileError = WriteFileError
   { path :: Path Abs File
   , native :: Maybe String
   }
+
+derive newtype instance showWriteFileError :: Show WriteFileError
+derive newtype instance eqwriteFileError :: Eq WriteFileError
 
 --------------------------------------------------------------------------------
 
