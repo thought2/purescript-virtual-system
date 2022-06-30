@@ -1,10 +1,5 @@
 module System.Class
   ( EitherV
-  , Err
-  , ErrReadFile
-  , ErrWriteFile
-  , ReadFileError
-  , WriteFileError
   , class MonadGetCwd
   , class MonadLog
   , class MonadLogErr
@@ -13,13 +8,9 @@ module System.Class
   , class MonadSystem
   , class MonadVirtualSystem
   , class MonadWriteFile
-  , class Print
-  , errReadFile
-  , errWriteFile
   , getCwd
   , log
   , logErr
-  , print
   , readFile
   , readFileLines
   , setCwd
@@ -30,44 +21,14 @@ module System.Class
 import Prelude
 
 import Data.Either (Either)
-import Data.Maybe (Maybe)
 import Data.String (Pattern(..), joinWith, split)
-import Data.Variant (Variant, inj)
-import Pathy (Abs, AbsDir, AbsFile, File, Path)
-import Type.Proxy (Proxy(..))
-import Type.Row (type (+))
+import Data.Variant (Variant)
+import Pathy (AbsDir, AbsFile)
+import System.Error (ErrReadFile, ErrWriteFile)
 
 --------------------------------------------------------------------------------
 
 type EitherV r a = Either (Variant r) a
-
---------------------------------------------------------------------------------
-
-type ErrReadFile r = (errReadFile :: ReadFileError | r)
-
-type ErrWriteFile r = (errWriteFile :: WriteFileError | r)
-
-type Err r = ErrReadFile + ErrWriteFile + r
-
---------------------------------------------------------------------------------
-
-errWriteFile :: forall r. WriteFileError -> Variant (ErrWriteFile r)
-errWriteFile = inj (Proxy :: _ "errWriteFile")
-
-errReadFile :: forall r. ReadFileError -> Variant (ErrReadFile r)
-errReadFile = inj (Proxy :: _ "errReadFile")
-
---------------------------------------------------------------------------------
-
-type ReadFileError =
-  { path :: Path Abs File
-  , native :: Maybe String
-  }
-
-type WriteFileError =
-  { path :: Path Abs File
-  , native :: Maybe String
-  }
 
 --------------------------------------------------------------------------------
 
@@ -114,7 +75,3 @@ readFileLines x = readFile x <#> map (split $ Pattern "\n")
 class MonadVirtualSystem :: forall k1 k2. k1 -> k2 -> (Type -> Type) -> Constraint
 class Monad m <= MonadVirtualSystem e o m | m -> e o
 
---------------------------------------------------------------------------------
-
-class Print a where
-  print :: a -> String

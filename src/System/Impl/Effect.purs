@@ -16,7 +16,9 @@ import Node.Process as N
 import Partial.Unsafe (unsafePartial)
 import Pathy (class IsDirOrFile, Abs, Path, AbsDir, posixParser, posixPrinter)
 import Pathy as P
-import System.Class (class MonadGetCwd, class MonadLog, class MonadLogErr, class MonadReadFile, class MonadSetCwd, class MonadSystem, class MonadWriteFile, class Print, errReadFile, errWriteFile, print)
+import Print.Class (class Print, print)
+import System.Class (class MonadGetCwd, class MonadLog, class MonadLogErr, class MonadReadFile, class MonadSetCwd, class MonadSystem, class MonadWriteFile)
+import System.Error (ReadFileError(..), WriteFileError(..), errReadFile, errWriteFile)
 
 --------------------------------------------------------------------------------
 
@@ -51,13 +53,13 @@ instance monadSetCwdEffect :: MonadSetCwd Effect where
 instance monadReadFileEffect :: MonadReadFile Effect where
   readFile p =
     readTextFile UTF8 (printPath p)
-      # catchEffect (\e -> errReadFile { path: p, native: pure $ show e })
+      # catchEffect (\e -> errReadFile $ ReadFileError { path: p, native: pure $ show e })
       # wrap
 
 instance monadWriteFileEffect :: MonadWriteFile Effect where
   writeFile p c =
     writeTextFile UTF8 (printPath p) c
-      # catchEffect (\e -> errWriteFile { path: p, native: pure $ show e })
+      # catchEffect (\e -> errWriteFile $ WriteFileError { path: p, native: pure $ show e })
       # wrap
 
 instance monadSystemEffect :: (Print e, Print o) => MonadSystem e o Effect

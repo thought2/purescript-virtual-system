@@ -6,8 +6,7 @@ module System.Impl.Virtual
   , initState
   , runExceptVirtual
   , runVirtual
-  )
-  where
+  ) where
 
 import Prelude
 
@@ -20,7 +19,8 @@ import Data.Map as M
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested (type (/\))
 import Pathy (Abs, Dir, File, Path, rootDir)
-import System.Class (class MonadGetCwd, class MonadLog, class MonadLogErr, class MonadReadFile, class MonadSetCwd, class MonadSystem, class MonadVirtualSystem, class MonadWriteFile, EitherV, errReadFile)
+import System.Class (class MonadGetCwd, class MonadLog, class MonadLogErr, class MonadReadFile, class MonadSetCwd, class MonadSystem, class MonadVirtualSystem, class MonadWriteFile, EitherV)
+import System.Error (ReadFileError(..), errReadFile)
 
 --------------------------------------------------------------------------------
 
@@ -87,7 +87,7 @@ instance monadSetCwdVirtual :: MonadSetCwd (Virtual e o) where
 instance monadReadFileVirtual :: MonadReadFile (Virtual e o) where
   readFile p = Virtual do
     { files } <- get <#> unwrapSystemState
-    M.lookup p files # note (errReadFile { path: p, native: Nothing }) # pure
+    M.lookup p files # note (errReadFile $ ReadFileError { path: p, native: Nothing }) # pure
 
 instance monadWriteFileVirtual :: MonadWriteFile (Virtual e o) where
   writeFile p c = Virtual do

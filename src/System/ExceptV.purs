@@ -15,8 +15,9 @@ import Control.Monad.Except (ExceptT(..))
 import Control.Monad.Except.Checked (ExceptV)
 import Data.Either (Either(..))
 import Pathy (AbsDir, AbsFile)
-import System.Class (class MonadGetCwd, class MonadLog, class MonadLogErr, class MonadReadFile, class MonadSetCwd, class MonadSystem, class MonadWriteFile, ErrReadFile, ErrWriteFile)
+import System.Class (class MonadGetCwd, class MonadLog, class MonadLogErr, class MonadReadFile, class MonadSetCwd, class MonadWriteFile)
 import System.Class as C
+import System.Error (ErrReadFile, ErrWriteFile)
 
 log :: forall r o m. MonadLog o m => o -> ExceptV r m Unit
 log x1 = C.log x1 <#> Right # ExceptT
