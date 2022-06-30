@@ -21,9 +21,7 @@ module System.Class
 
 import Prelude
 
-import Control.Monad.Trans.Class (lift)
 import Data.Either (Either(..))
-import Data.String (Pattern(..), joinWith, split)
 import Data.Variant (Variant)
 import Pathy (AbsDir, AbsFile, AnyFile, (</>))
 import System.Error (ErrReadFile, ErrWriteFile)

@@ -45,7 +45,9 @@ instance monadLogErrEffect :: (Print e) => MonadLogErr e Effect where
   logErr = print >>> C.error >>> wrap
 
 instance monadGetCwdEffect :: MonadGetCwd Effect where
-  getCwd = N.cwd <#> unsafePartial parseAbsDir # wrap
+  getCwd = N.cwd <#> parseDir # wrap
+    where
+    parseDir s = unsafePartial parseAbsDir (s <> "/")
 
 instance monadSetCwdEffect :: MonadSetCwd Effect where
   setCwd x = N.chdir (printPath x) # wrap
