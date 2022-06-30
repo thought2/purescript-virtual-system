@@ -15,7 +15,8 @@ import Prelude
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant, inj, on)
-import Pathy (Abs, File, Path)
+import Pathy (class IsDirOrFile, Abs, File, Path, posixPrinter)
+import Pathy as P
 import Print.Class (class Print, print)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
@@ -78,7 +79,11 @@ printErr x = x
 --------------------------------------------------------------------------------
 
 instance printReadFileError :: Print ReadFileError where
-  print (ReadFileError { path }) = "Failed to read file at path " <> show path <> "."
+  print (ReadFileError { path }) = "Failed to read file at path " <> printPath path <> "."
 
 instance printWriteFileError :: Print WriteFileError where
-  print (WriteFileError { path }) = "Failed to write to file at path " <> show path <> "."
+  print (WriteFileError { path }) = "Failed to write to file at path " <> printPath path <> "."
+
+--------------------------------------------------------------------------------
+printPath :: forall a. IsDirOrFile a => Path Abs a -> String
+printPath p = P.sandboxAny p # P.printPath posixPrinter
